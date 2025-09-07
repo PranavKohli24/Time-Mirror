@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Future You - AI Age Progression</title>
+    <link rel="stylesheet" href="index.css">
+    <script type="importmap">
+      {
+        "imports": {
+          "@google/genai": "https://esm.sh/@google/genai@1.0.0"
+        }
+      }
+    </script>
+</head>
+<body>
+    <div id="app-container">
+        <header>
+            <h1>Future You</h1>
+            <p>Upload a photo to see how you might look in the future.</p>
+        </header>
+
+        <main>
+            <div id="upload-section">
+                <label for="image-upload" class="upload-button">Upload Photo</label>
+                <input type="file" id="image-upload" accept="image/*" style="display: none;">
+                <div id="image-preview-container" class="hidden">
+                    <img id="image-preview" src="#" alt="Your uploaded photo" />
+                </div>
+            </div>
+
+            <div id="controls-section" class="hidden">
+                <h2>Lifestyle Factors</h2>
+                <div class="slider-group">
+                    <label for="smoking-slider">Smoking</label>
+                    <input type="range" id="smoking-slider" min="0" max="10" value="0">
+                </div>
+                <div class="slider-group">
+                    <label for="sun-slider">Sun Exposure</label>
+                    <input type="range" id="sun-slider" min="0" max="10" value="2">
+                </div>
+                <div class="slider-group">
+                    <label for="stress-slider">Stress</label>
+                    <input type="range" id="stress-slider" min="0" max="10" value="3">
+                </div>
+                 <button id="generate-button" class="action-button">Generate Future Images</button>
+            </div>
+
+            <div id="results-section" class="hidden">
+                <h2>Your Future Timeline</h2>
+                <div id="loading-spinner" class="hidden">
+                    <div class="spinner"></div>
+                    <p>Generating your future self... This may take a moment.</p>
+                </div>
+                <div id="timeline-container"></div>
+            </div>
+             <div id="error-message" class="hidden"></div>
+        </main>
+
+        <footer>
+            <p><strong>Privacy Note:</strong> Your images are processed for generation and are not stored or shared. All processing is done to provide your results and your data remains private.</p>
+        </footer>
+    </div>
+    <script type="module" src="index.tsx"></script>
+</body>
+</html>
