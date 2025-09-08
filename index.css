@@ -426,6 +426,51 @@ input[type="range"]:active::-moz-range-thumb {
     transform: scale(1.05);
 }
 
+/* --- Progress Bar Styles --- */
+.timeline-item.is-loading .timeline-item-content {
+    justify-content: center;
+    align-items: center;
+}
+.timeline-item.is-loading .year {
+    color: var(--text-secondary);
+}
+.progress-container {
+    width: 80%;
+    height: 8px;
+    background-color: var(--secondary-container);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-color);
+}
+.progress-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 150%;
+    background: var(--accent-gradient);
+    opacity: 0.6;
+    transform: translateX(-100%) skewX(-15deg);
+    animation: shimmer 2s infinite linear;
+}
+/* --- Error State Styles --- */
+.timeline-item.is-error .timeline-item-content {
+    justify-content: center;
+    align-items: center;
+    color: var(--error-text);
+}
+.timeline-item.is-error::before {
+    background: var(--error-border);
+}
+.timeline-item.is-error .error-text {
+    font-weight: 600;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+
 /* --- Footer & Utils --- */
 footer {
     text-align: center;

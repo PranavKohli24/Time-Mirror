@@ -119,24 +119,33 @@ async function generateFutureImages() {
     const years = [2030, 2040, 2050, 2060, 2070];
     const lifestyleFactors = getLifestyleFactors();
 
+    const placeholderElements = years.map(year => displayImagePlaceholder(year));
+
     try {
         const imagePromises = years.map(year => {
             const prompt = createPrompt(year, lifestyleFactors);
-            return generateSingleImage(prompt, uploadedImageBase64, originalMimeType);
+            return generateSingleImage(prompt, uploadedImageBase64!, originalMimeType);
         });
-
-        const generatedImages = await Promise.all(imagePromises);
-
-        generatedImages.forEach((base64Image, index) => {
-            if (base64Image) {
-                const year = years[index];
-                displayImage(base64Image, year);
+        
+        const processingPromises = imagePromises.map(async (promise, index) => {
+            try {
+                const base64Image = await promise;
+                if (base64Image) {
+                    populateImageCard(placeholderElements[index], base64Image, years[index]);
+                } else {
+                    throw new Error("API did not return image data.");
+                }
+            } catch (error) {
+                console.error(`Error generating image for ${years[index]}:`, error);
+                showCardError(placeholderElements[index], years[index]);
             }
         });
 
+        await Promise.all(processingPromises);
+
     } catch (error) {
-        console.error("Error generating images:", error);
-        showError('Sorry, something went wrong while generating the images. Please try again.');
+        console.error("General error during image generation:", error);
+        showError('An unexpected error occurred. Please try again.');
     } finally {
         stopLoadingAnimation();
         generateButton.disabled = false;
@@ -197,18 +206,42 @@ async function generateSingleImage(prompt: string, imageBase64: string, mimeType
 
     } catch (error) {
         console.error(`Error generating image for prompt "${prompt}":`, error);
-        // Propagate the error to be caught by the main try-catch block
         throw error;
     }
 }
 
-
-function displayImage(base64Image: string, year: number) {
+function displayImagePlaceholder(year: number): HTMLDivElement {
     const item = document.createElement('div');
-    item.className = 'timeline-item';
+    item.className = 'timeline-item is-loading';
 
     const contentWrapper = document.createElement('div');
     contentWrapper.className = 'timeline-item-content';
+    
+    const progressContainer = document.createElement('div');
+    progressContainer.className = 'progress-container';
+    const progressBar = document.createElement('div');
+    progressBar.className = 'progress-bar';
+    progressContainer.appendChild(progressBar);
+
+    const yearEl = document.createElement('p');
+    yearEl.className = 'year';
+    yearEl.textContent = year.toString();
+
+    contentWrapper.appendChild(progressContainer);
+    contentWrapper.appendChild(yearEl);
+    item.appendChild(contentWrapper);
+
+    timelineContainer.appendChild(item);
+    return item;
+}
+
+
+function populateImageCard(cardElement: HTMLDivElement, base64Image: string, year: number) {
+    cardElement.classList.remove('is-loading');
+    const contentWrapper = cardElement.querySelector('.timeline-item-content') as HTMLDivElement;
+    if (!contentWrapper) return;
+    
+    contentWrapper.innerHTML = '';
 
     const img = new Image();
     img.src = `data:image/png;base64,${base64Image}`;
@@ -228,9 +261,27 @@ function displayImage(base64Image: string, year: number) {
     contentWrapper.appendChild(img);
     contentWrapper.appendChild(yearEl);
     contentWrapper.appendChild(downloadLink);
-    item.appendChild(contentWrapper);
+}
 
-    timelineContainer.appendChild(item);
+function showCardError(cardElement: HTMLDivElement, year: number) {
+    cardElement.classList.remove('is-loading');
+    cardElement.classList.add('is-error');
+    
+    const contentWrapper = cardElement.querySelector('.timeline-item-content') as HTMLDivElement;
+    if (!contentWrapper) return;
+    
+    contentWrapper.innerHTML = '';
+    
+    const errorText = document.createElement('p');
+    errorText.className = 'error-text';
+    errorText.textContent = 'Failed';
+
+    const yearEl = document.createElement('p');
+    yearEl.className = 'year';
+    yearEl.textContent = year.toString();
+
+    contentWrapper.appendChild(errorText);
+    contentWrapper.appendChild(yearEl);
 }
 
 
