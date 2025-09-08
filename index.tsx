@@ -8,18 +8,165 @@ import { GoogleGenAI, Modality } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-const dropZone = document.getElementById('drop-zone') as HTMLDivElement;
-const imageUpload = document.getElementById('image-upload') as HTMLInputElement;
-const imagePreviewContainer = document.getElementById('image-preview-container') as HTMLDivElement;
-const imagePreview = document.getElementById('image-preview') as HTMLImageElement;
-const controlsSection = document.getElementById('controls-section') as HTMLDivElement;
-const resultsSection = document.getElementById('results-section') as HTMLDivElement;
-const timelineContainer = document.getElementById('timeline-container') as HTMLDivElement;
-const loadingSpinner = document.getElementById('loading-spinner') as HTMLDivElement;
-const loadingText = document.getElementById('loading-text') as HTMLParagraphElement;
-const generateButton = document.getElementById('generate-button') as HTMLButtonElement;
-const errorMessage = document.getElementById('error-message') as HTMLDivElement;
+// --- Type Definitions ---
+type LifestyleFactors = {
+    smoking: number;
+    sunExposure: number;
+    stress: number;
+};
 
+// --- Utility Functions ---
+function getElement<T extends HTMLElement>(id: string): T {
+    const element = document.getElementById(id);
+    if (!element) {
+        throw new Error(`Fatal Error: Element with id "${id}" not found.`);
+    }
+    return element as T;
+}
+
+function applyStyles(element: HTMLElement, styles: Partial<CSSStyleDeclaration>) {
+    for (const property in styles) {
+        (element.style as any)[property] = styles[property as keyof typeof styles];
+    }
+}
+
+// --- Style Definitions (CSS-in-TS) ---
+const timelineItemStyle: Partial<CSSStyleDeclaration> = {
+    textAlign: 'center',
+    borderRadius: '18px',
+    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+    flex: '0 0 200px',
+    scrollSnapAlign: 'center',
+    position: 'relative',
+    padding: '2px',
+    background: 'transparent',
+    zIndex: '1',
+};
+const timelineItemHoverStyle: Partial<CSSStyleDeclaration> = {
+    transform: 'translateY(-10px) scale(1.05)',
+    boxShadow: '0 15px 30px rgba(0, 0, 0, 0.4)',
+};
+
+const timelineItemPseudoBeforeStyle: Partial<CSSStyleDeclaration> = {
+    content: "''",
+    position: 'absolute',
+    inset: '0',
+    background: 'var(--border-color)',
+    borderRadius: 'inherit',
+    zIndex: '-1',
+    transition: 'background 0.4s ease',
+};
+const timelineItemPseudoBeforeHoverStyle: Partial<CSSStyleDeclaration> = {
+    background: 'var(--accent-gradient)',
+};
+
+const timelineItemContentStyle: Partial<CSSStyleDeclaration> = {
+    background: '#161b22',
+    padding: '1rem',
+    borderRadius: '16px',
+    height: '100%',
+    boxSizing: 'border-box',
+    display: 'flex',
+    flexDirection: 'column',
+};
+
+const imageStyle: Partial<CSSStyleDeclaration> = {
+    width: '100%',
+    height: '200px',
+    objectFit: 'cover',
+    borderRadius: '12px',
+    marginBottom: '1rem',
+};
+
+const yearStyle: Partial<CSSStyleDeclaration> = {
+    fontSize: '1.5rem',
+    fontWeight: '700',
+    color: 'var(--text-primary)',
+    marginBottom: '1rem',
+};
+
+const downloadLinkStyle: Partial<CSSStyleDeclaration> = {
+    backgroundColor: 'var(--secondary-container)',
+    color: 'var(--text-primary)',
+    padding: '10px 18px',
+    borderRadius: '8px',
+    textDecoration: 'none',
+    fontWeight: '600',
+    fontSize: '0.9rem',
+    display: 'inline-block',
+    transition: 'background-color 0.2s ease, transform 0.2s ease, color 0.2s ease',
+    marginTop: 'auto',
+    border: '1px solid var(--border-color)',
+    cursor: 'pointer',
+};
+const downloadLinkHoverStyle: Partial<CSSStyleDeclaration> = {
+    backgroundColor: 'var(--accent-color-1)',
+    color: '#fff',
+    transform: 'scale(1.05)',
+};
+
+const loadingContentStyle: Partial<CSSStyleDeclaration> = {
+    justifyContent: 'center',
+    alignItems: 'center',
+};
+
+const loadingYearStyle: Partial<CSSStyleDeclaration> = {
+    color: 'var(--text-secondary)',
+};
+
+const progressContainerStyle: Partial<CSSStyleDeclaration> = {
+    width: '80%',
+    height: '8px',
+    backgroundColor: 'var(--secondary-container)',
+    borderRadius: '4px',
+    overflow: 'hidden',
+    position: 'relative',
+    marginBottom: '1rem',
+    border: '1px solid var(--border-color)',
+};
+
+const progressBarStyle: Partial<CSSStyleDeclaration> = {
+    position: 'absolute',
+    top: '0',
+    left: '0',
+    height: '100%',
+    width: '150%',
+    background: 'var(--accent-gradient)',
+    opacity: '0.6',
+    transform: 'translateX(-100%) skewX(-15deg)',
+    animation: 'shimmer 2s infinite linear',
+};
+
+const errorContentStyle: Partial<CSSStyleDeclaration> = {
+    justifyContent: 'center',
+    alignItems: 'center',
+    color: 'var(--error-text)',
+};
+
+const errorPseudoBeforeStyle: Partial<CSSStyleDeclaration> = {
+    background: 'var(--error-border)',
+};
+
+const errorTextStyle: Partial<CSSStyleDeclaration> = {
+    fontWeight: '600',
+    fontSize: '1.2rem',
+    marginBottom: '0.5rem',
+};
+
+// --- DOM Element Selection ---
+const dropZone = getElement<HTMLDivElement>('drop-zone');
+const imageUpload = getElement<HTMLInputElement>('image-upload');
+const imagePreviewContainer = getElement<HTMLDivElement>('image-preview-container');
+const imagePreview = getElement<HTMLImageElement>('image-preview');
+const controlsSection = getElement<HTMLDivElement>('controls-section');
+const resultsSection = getElement<HTMLDivElement>('results-section');
+const timelineContainer = getElement<HTMLDivElement>('timeline-container');
+const loadingSpinner = getElement<HTMLDivElement>('loading-spinner');
+const loadingText = getElement<HTMLParagraphElement>('loading-text');
+const generateButton = getElement<HTMLButtonElement>('generate-button');
+const errorMessage = getElement<HTMLDivElement>('error-message');
+
+// --- State Variables ---
 let uploadedImageBase64: string | null = null;
 let originalFileName = 'generated_image';
 let originalMimeType = 'image/png';
@@ -38,16 +185,19 @@ const loadingMessages = [
     "Preparing your sparkling self…"
 ];
 
-// Drag and Drop functionality
+// --- Event Listeners ---
 dropZone.addEventListener('click', () => imageUpload.click());
-dropZone.addEventListener('dragover', (event) => {
+
+dropZone.addEventListener('dragover', (event: DragEvent) => {
     event.preventDefault();
     dropZone.classList.add('dragover');
 });
+
 dropZone.addEventListener('dragleave', () => {
     dropZone.classList.remove('dragover');
 });
-dropZone.addEventListener('drop', (event) => {
+
+dropZone.addEventListener('drop', (event: DragEvent) => {
     event.preventDefault();
     dropZone.classList.remove('dragover');
     const files = event.dataTransfer?.files;
@@ -55,7 +205,8 @@ dropZone.addEventListener('drop', (event) => {
         handleFile(files[0]);
     }
 });
-imageUpload.addEventListener('change', (event) => {
+
+imageUpload.addEventListener('change', (event: Event) => {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0];
     if (file) {
@@ -63,6 +214,15 @@ imageUpload.addEventListener('change', (event) => {
     }
 });
 
+generateButton.addEventListener('click', () => {
+    if (uploadedImageBase64) {
+        generateFutureImages();
+    } else {
+        showError('Please upload an image first.');
+    }
+});
+
+// --- Core Functions ---
 function handleFile(file: File) {
     originalFileName = file.name.split('.').slice(0, -1).join('.');
     originalMimeType = file.type;
@@ -82,15 +242,6 @@ function handleFile(file: File) {
     reader.readAsDataURL(file);
 }
 
-
-generateButton.addEventListener('click', () => {
-    if (uploadedImageBase64) {
-        generateFutureImages();
-    } else {
-        showError('Please upload an image first.');
-    }
-});
-
 function startLoadingAnimation() {
     let messageIndex = 0;
     loadingText.textContent = loadingMessages[messageIndex];
@@ -105,7 +256,6 @@ function stopLoadingAnimation() {
     clearInterval(loadingInterval);
     loadingSpinner.classList.add('hidden');
 }
-
 
 async function generateFutureImages() {
     if (!uploadedImageBase64) return;
@@ -152,31 +302,32 @@ async function generateFutureImages() {
     }
 }
 
-function getLifestyleFactors() {
-    const smoking = parseInt((document.getElementById('smoking-slider') as HTMLInputElement).value, 10);
-    const sunExposure = parseInt((document.getElementById('sun-slider') as HTMLInputElement).value, 10);
-    const stress = parseInt((document.getElementById('stress-slider') as HTMLInputElement).value, 10);
-    
-    let factorsText = [];
-    if (smoking > 5) factorsText.push("a history of smoking");
-    if (sunExposure > 5) factorsText.push("significant sun exposure");
-    if (stress > 5) factorsText.push("high levels of stress");
-
-    if (factorsText.length === 0) return "a healthy lifestyle";
-    return factorsText.join(", ");
+function getLifestyleFactors(): LifestyleFactors {
+    const smoking = parseInt(getElement<HTMLInputElement>('smoking-slider').value, 10);
+    const sunExposure = parseInt(getElement<HTMLInputElement>('sun-slider').value, 10);
+    const stress = parseInt(getElement<HTMLInputElement>('stress-slider').value, 10);
+    return { smoking, sunExposure, stress };
 }
 
-function createPrompt(year: number, lifestyleFactors: string): string {
+function createPrompt(year: number, lifestyleFactors: LifestyleFactors): string {
+    const factorsTextParts: string[] = [];
+    if (lifestyleFactors.smoking > 5) factorsTextParts.push("a history of smoking");
+    if (lifestyleFactors.sunExposure > 5) factorsTextParts.push("significant sun exposure");
+    if (lifestyleFactors.stress > 5) factorsTextParts.push("high levels of stress");
+
+    const factorsText = factorsTextParts.length === 0 
+        ? "a healthy lifestyle" 
+        : factorsTextParts.join(", ");
+
     return `Generate a single photorealistic image predicting how the person in the photo will look in the year ${year}.
 - Key Instructions:
 - Preserve core identity: The bone structure, eye color, and key facial landmarks must be maintained.
 - Realistic, subtle aging: Apply gentle, age-appropriate wrinkles and a few hints of grey hair. The skin should still look radiant and youthful for their age. The eyes should remain sparkling and energetic.
 - Background: Keep the background consistent with the original photo.
-- Lifestyle influence: The person has had ${lifestyleFactors}, which should subtly affect wrinkle intensity.
+- Lifestyle influence: The person has had ${factorsText}, which should subtly affect wrinkle intensity.
 - Output format: High-resolution PNG.
 - Safety: Ensure the output is positive and respectful.`;
 }
-
 
 async function generateSingleImage(prompt: string, imageBase64: string, mimeType: string): Promise<string | null> {
     try {
@@ -210,21 +361,27 @@ async function generateSingleImage(prompt: string, imageBase64: string, mimeType
     }
 }
 
-function displayImagePlaceholder(year: number): HTMLDivElement {
+function displayImagePlaceholder(year: number): { item: HTMLDivElement, before: HTMLDivElement } {
     const item = document.createElement('div');
-    item.className = 'timeline-item is-loading';
+    applyStyles(item, timelineItemStyle);
+
+    const before = document.createElement('div');
+    applyStyles(before, timelineItemPseudoBeforeStyle);
+    item.appendChild(before);
 
     const contentWrapper = document.createElement('div');
-    contentWrapper.className = 'timeline-item-content';
+    applyStyles(contentWrapper, timelineItemContentStyle);
+    applyStyles(contentWrapper, loadingContentStyle);
     
     const progressContainer = document.createElement('div');
-    progressContainer.className = 'progress-container';
+    applyStyles(progressContainer, progressContainerStyle);
     const progressBar = document.createElement('div');
-    progressBar.className = 'progress-bar';
+    applyStyles(progressBar, progressBarStyle);
     progressContainer.appendChild(progressBar);
 
     const yearEl = document.createElement('p');
-    yearEl.className = 'year';
+    applyStyles(yearEl, yearStyle);
+    applyStyles(yearEl, loadingYearStyle);
     yearEl.textContent = year.toString();
 
     contentWrapper.appendChild(progressContainer);
@@ -232,58 +389,86 @@ function displayImagePlaceholder(year: number): HTMLDivElement {
     item.appendChild(contentWrapper);
 
     timelineContainer.appendChild(item);
-    return item;
+    return { item, before };
 }
 
-
-function populateImageCard(cardElement: HTMLDivElement, base64Image: string, year: number) {
-    cardElement.classList.remove('is-loading');
-    const contentWrapper = cardElement.querySelector('.timeline-item-content') as HTMLDivElement;
+function populateImageCard(card: { item: HTMLDivElement, before: HTMLDivElement }, base64Image: string, year: number) {
+    const { item, before } = card;
+    const contentWrapper = item.querySelector('div:last-child') as HTMLDivElement;
     if (!contentWrapper) return;
     
     contentWrapper.innerHTML = '';
 
     const img = new Image();
-    img.src = `data:image/png;base64,${base64Image}`;
     img.alt = `You in ${year}`;
     img.loading = 'lazy';
+    applyStyles(img, imageStyle);
+
+    // Fade-in effect
+    img.style.opacity = '0';
+    img.style.transition = 'opacity 0.6s ease-in-out';
+    img.onload = () => {
+        setTimeout(() => { img.style.opacity = '1'; }, 50);
+    };
+    img.src = `data:image/png;base64,${base64Image}`;
 
     const yearEl = document.createElement('p');
-    yearEl.className = 'year';
+    applyStyles(yearEl, yearStyle);
     yearEl.textContent = year.toString();
     
     const downloadLink = document.createElement('a');
+    applyStyles(downloadLink, downloadLinkStyle);
     downloadLink.href = img.src;
     downloadLink.textContent = 'Download';
-    downloadLink.className = 'download-link';
     downloadLink.download = `${originalFileName}_${year}.png`;
+
+    // Hover effects for download link
+    downloadLink.addEventListener('mouseover', () => applyStyles(downloadLink, downloadLinkHoverStyle));
+    downloadLink.addEventListener('mouseout', () => applyStyles(downloadLink, downloadLinkStyle));
+
 
     contentWrapper.appendChild(img);
     contentWrapper.appendChild(yearEl);
     contentWrapper.appendChild(downloadLink);
+    
+    // Hover effects for the card
+    item.addEventListener('mouseover', () => {
+        applyStyles(item, { ...timelineItemStyle, ...timelineItemHoverStyle });
+        applyStyles(before, { ...timelineItemPseudoBeforeStyle, ...timelineItemPseudoBeforeHoverStyle });
+    });
+    item.addEventListener('mouseout', () => {
+        applyStyles(item, timelineItemStyle);
+        applyStyles(before, timelineItemPseudoBeforeStyle);
+    });
 }
 
-function showCardError(cardElement: HTMLDivElement, year: number) {
-    cardElement.classList.remove('is-loading');
-    cardElement.classList.add('is-error');
-    
-    const contentWrapper = cardElement.querySelector('.timeline-item-content') as HTMLDivElement;
+function showCardError(card: { item: HTMLDivElement, before: HTMLDivElement }, year: number) {
+    const { item, before } = card;
+    applyStyles(before, { ...timelineItemPseudoBeforeStyle, ...errorPseudoBeforeStyle });
+
+    const contentWrapper = item.querySelector('div:last-child') as HTMLDivElement;
     if (!contentWrapper) return;
     
     contentWrapper.innerHTML = '';
-    
+    applyStyles(contentWrapper, { ...timelineItemContentStyle, ...errorContentStyle });
+
     const errorText = document.createElement('p');
-    errorText.className = 'error-text';
+    applyStyles(errorText, errorTextStyle);
     errorText.textContent = 'Failed';
 
+    // Fade-in effect
+    errorText.style.opacity = '0';
+    errorText.style.transition = 'opacity 0.5s ease';
+
     const yearEl = document.createElement('p');
-    yearEl.className = 'year';
+    applyStyles(yearEl, yearStyle);
     yearEl.textContent = year.toString();
 
     contentWrapper.appendChild(errorText);
     contentWrapper.appendChild(yearEl);
+    
+    setTimeout(() => { errorText.style.opacity = '1'; }, 50);
 }
-
 
 function showError(message: string) {
     errorMessage.textContent = message;
