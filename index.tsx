@@ -8,6 +8,7 @@ import { GoogleGenAI, Modality } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
+const dropZone = document.getElementById('drop-zone') as HTMLDivElement;
 const imageUpload = document.getElementById('image-upload') as HTMLInputElement;
 const imagePreviewContainer = document.getElementById('image-preview-container') as HTMLDivElement;
 const imagePreview = document.getElementById('image-preview') as HTMLImageElement;
@@ -15,33 +16,72 @@ const controlsSection = document.getElementById('controls-section') as HTMLDivEl
 const resultsSection = document.getElementById('results-section') as HTMLDivElement;
 const timelineContainer = document.getElementById('timeline-container') as HTMLDivElement;
 const loadingSpinner = document.getElementById('loading-spinner') as HTMLDivElement;
+const loadingText = document.getElementById('loading-text') as HTMLParagraphElement;
 const generateButton = document.getElementById('generate-button') as HTMLButtonElement;
 const errorMessage = document.getElementById('error-message') as HTMLDivElement;
 
 let uploadedImageBase64: string | null = null;
 let originalFileName = 'generated_image';
 let originalMimeType = 'image/png';
+let loadingInterval: number;
 
+const loadingMessages = [
+    "Crafting your radiant future…",
+    "Polishing the timeline…",
+    "Summoning the best version of you…",
+    "Waving the magic of time…",
+    "Infusing youth into tomorrow…",
+    "Aligning the stars for your glow…",
+    "Mapping your elegant future…",
+    "Gently aging with style…",
+    "Projecting your timeline brilliance…",
+    "Preparing your sparkling self…"
+];
 
+// Drag and Drop functionality
+dropZone.addEventListener('click', () => imageUpload.click());
+dropZone.addEventListener('dragover', (event) => {
+    event.preventDefault();
+    dropZone.classList.add('dragover');
+});
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('dragover');
+});
+dropZone.addEventListener('drop', (event) => {
+    event.preventDefault();
+    dropZone.classList.remove('dragover');
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+        handleFile(files[0]);
+    }
+});
 imageUpload.addEventListener('change', (event) => {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0];
     if (file) {
-        originalFileName = file.name.split('.').slice(0, -1).join('.');
-        originalMimeType = file.type;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const result = e.target?.result as string;
-            imagePreview.src = result;
-            uploadedImageBase64 = result.split(',')[1];
-            imagePreviewContainer.classList.remove('hidden');
-            controlsSection.classList.remove('hidden');
-            resultsSection.classList.add('hidden');
-            timelineContainer.innerHTML = '';
-        };
-        reader.readAsDataURL(file);
+        handleFile(file);
     }
 });
+
+function handleFile(file: File) {
+    originalFileName = file.name.split('.').slice(0, -1).join('.');
+    originalMimeType = file.type;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const result = e.target?.result as string;
+        imagePreview.src = result;
+        uploadedImageBase64 = result.split(',')[1];
+        
+        dropZone.classList.add('hidden');
+        imagePreviewContainer.classList.remove('hidden');
+        controlsSection.classList.add('is-active');
+        resultsSection.classList.remove('is-active');
+        timelineContainer.innerHTML = '';
+        errorMessage.classList.remove('is-active');
+    };
+    reader.readAsDataURL(file);
+}
+
 
 generateButton.addEventListener('click', () => {
     if (uploadedImageBase64) {
@@ -51,14 +91,30 @@ generateButton.addEventListener('click', () => {
     }
 });
 
+function startLoadingAnimation() {
+    let messageIndex = 0;
+    loadingText.textContent = loadingMessages[messageIndex];
+    loadingInterval = window.setInterval(() => {
+        messageIndex = (messageIndex + 1) % loadingMessages.length;
+        loadingText.textContent = loadingMessages[messageIndex];
+    }, 2000);
+    loadingSpinner.classList.remove('hidden');
+}
+
+function stopLoadingAnimation() {
+    clearInterval(loadingInterval);
+    loadingSpinner.classList.add('hidden');
+}
+
+
 async function generateFutureImages() {
     if (!uploadedImageBase64) return;
 
-    // Show loading spinner and results section
-    loadingSpinner.classList.remove('hidden');
-    resultsSection.classList.remove('hidden');
+    resultsSection.classList.add('is-active');
+    startLoadingAnimation();
     timelineContainer.innerHTML = '';
-    errorMessage.classList.add('hidden');
+    errorMessage.classList.remove('is-active');
+    generateButton.disabled = true;
     
     const years = [2030, 2040, 2050, 2060, 2070];
     const lifestyleFactors = getLifestyleFactors();
@@ -82,8 +138,8 @@ async function generateFutureImages() {
         console.error("Error generating images:", error);
         showError('Sorry, something went wrong while generating the images. Please try again.');
     } finally {
-        // Hide loading spinner
-        loadingSpinner.classList.add('hidden');
+        stopLoadingAnimation();
+        generateButton.disabled = false;
     }
 }
 
@@ -141,7 +197,8 @@ async function generateSingleImage(prompt: string, imageBase64: string, mimeType
 
     } catch (error) {
         console.error(`Error generating image for prompt "${prompt}":`, error);
-        return null;
+        // Propagate the error to be caught by the main try-catch block
+        throw error;
     }
 }
 
@@ -150,9 +207,13 @@ function displayImage(base64Image: string, year: number) {
     const item = document.createElement('div');
     item.className = 'timeline-item';
 
+    const contentWrapper = document.createElement('div');
+    contentWrapper.className = 'timeline-item-content';
+
     const img = new Image();
     img.src = `data:image/png;base64,${base64Image}`;
     img.alt = `You in ${year}`;
+    img.loading = 'lazy';
 
     const yearEl = document.createElement('p');
     yearEl.className = 'year';
@@ -164,9 +225,10 @@ function displayImage(base64Image: string, year: number) {
     downloadLink.className = 'download-link';
     downloadLink.download = `${originalFileName}_${year}.png`;
 
-    item.appendChild(img);
-    item.appendChild(yearEl);
-    item.appendChild(downloadLink);
+    contentWrapper.appendChild(img);
+    contentWrapper.appendChild(yearEl);
+    contentWrapper.appendChild(downloadLink);
+    item.appendChild(contentWrapper);
 
     timelineContainer.appendChild(item);
 }
@@ -174,5 +236,5 @@ function displayImage(base64Image: string, year: number) {
 
 function showError(message: string) {
     errorMessage.textContent = message;
-    errorMessage.classList.remove('hidden');
+    errorMessage.classList.add('is-active');
 }
