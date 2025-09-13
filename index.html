@@ -17,76 +17,7 @@
     </script>
 </head>
 <body>
-    <div id="app-container">
-        <header>
-            <h1>TimeMirror</h1>
-            <p>Peer into your future. Upload a portrait and allow our advanced temporal projection AI to reveal a glimpse of the years to come.</p>
-        </header>
-
-        <main>
-            <div id="upload-section">
-                <div id="drop-zone">
-                     <div class="drop-zone-prompt">
-                        <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 16.5V3M12 3L16 7.375M12 3L8 7.375M21 12.5V19.8C21 20.1313 20.8682 20.4493 20.6364 20.6811C20.4045 20.9129 20.0866 21.0447 19.755 21.0447H4.245C3.91341 21.0447 3.59551 20.9129 3.36364 20.6811C3.13177 20.4493 3 20.1313 3 19.8V12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        <p>Drag and drop your photograph, or <span class="upload-link">browse files</span></p>
-                    </div>
-                    <input type="file" id="image-upload" accept="image/*" hidden>
-                </div>
-                <div id="image-preview-container" class="hidden">
-                    <img id="image-preview" src="" alt="Your uploaded photo" />
-                </div>
-            </div>
-
-            <div id="controls-section">
-                <h2>Adjust Lifestyle Factors</h2>
-                <div class="slider-group">
-                    <label for="smoking-slider">Smoking
-                        <span class="tooltip-icon">?
-                            <span class="tooltip-text">Simulates the effect of long-term smoking on skin health and aging.</span>
-                        </span>
-                    </label>
-                    <input type="range" id="smoking-slider" min="0" max="10" value="0">
-                </div>
-                <div class="slider-group">
-                    <label for="sunExposure-slider">Sun Exposure
-                        <span class="tooltip-icon">?
-                            <span class="tooltip-text">Models the impact of cumulative sun exposure, from minimal to heavy.</span>
-                        </span>
-                    </label>
-                    <input type="range" id="sunExposure-slider" min="0" max="10" value="2">
-                </div>
-                <div class="slider-group">
-                    <label for="stress-slider">Stress
-                        <span class="tooltip-icon">?
-                            <span class="tooltip-text">Reflects how high or low stress levels can influence signs of aging.</span>
-                        </span>
-                    </label>
-                    <input type="range" id="stress-slider" min="0" max="10" value="3">
-                </div>
-                <button id="generate-button" class="action-button">Envision My Future</button>
-            </div>
-
-            <div id="results-section">
-                <h2>Your Journey Through Time Awaits</h2>
-                <div id="loading-spinner" class="hidden">
-                     <div class="clock-loader">
-                        <div class="clock-hand clock-hour-hand"></div>
-                        <div class="clock-hand clock-minute-hand"></div>
-                    </div>
-                    <p id="loading-text"></p>
-                </div>
-                <div id="timeline-container"></div>
-            </div>
-
-            <div id="error-message"></div>
-        </main>
-
-        <footer>
-            <p><strong>Privacy Commitment:</strong> Your images are processed in memory and are never stored on our servers.</p>
-        </footer>
-    </div>
+    <div id="app-root"></div>
     <script type="module" src="index.tsx"></script>
 </body>
 </html>
