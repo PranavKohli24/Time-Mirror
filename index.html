@@ -3,45 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TimeMirror - Imagine Your Future Self</title>
+    <title>TimeMirror | Envision Your Future</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="index.css">
     <script type="importmap">
-      {
+    {
         "imports": {
-          "@google/genai": "https://esm.sh/@google/genai@1.0.0"
+            "@google/genai": "https://esm.sh/@google/genai@1.0.0"
         }
-      }
+    }
     </script>
 </head>
 <body>
     <div id="app-container">
         <header>
             <h1>TimeMirror</h1>
-            <p>Travel through time. Upload a portrait and watch Kohli AI, powered by Nano-banana reveal your how you ll look after decades.</p>
+            <p>Peer into your future. Upload a portrait and allow our advanced temporal projection AI to reveal a glimpse of the years to come.</p>
         </header>
 
         <main>
             <div id="upload-section">
                 <div id="drop-zone">
-                    <div class="drop-zone-prompt">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-cloud-upload" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M4.406 1.342A5.53 5.53 0 0 1 8 0c2.69 0 4.923 2 5.166 4.579C14.758 4.804 16 6.137 16 7.773 16 9.569 14.502 11 12.687 11H10.5a.5.5 0 0 1 0-1h2.188C13.979 10 15 8.981 15 7.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 2.825 10.328 1 8 1a4.53 4.53 0 0 0-4.482 3.375c-.215.654-.34 1.332-.34 2.025v.5H2.5A2.5 2.5 0 0 0 0 8.5v.003c.312.023.616.05.92.083a.5.5 0 0 1 .488.544l-.23 1.15a.5.5 0 0 1-.968-.194L.43 8.867A3.5 3.5 0 0 1 2.5 5.5H3V5a5.506 5.506 0 0 1 .52-2.658z"/>
-                            <path fill-rule="evenodd" d="M7.646 4.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707V14.5a.5.5 0 0 1-1 0V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3z"/>
+                     <div class="drop-zone-prompt">
+                        <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 16.5V3M12 3L16 7.375M12 3L8 7.375M21 12.5V19.8C21 20.1313 20.8682 20.4493 20.6364 20.6811C20.4045 20.9129 20.0866 21.0447 19.755 21.0447H4.245C3.91341 21.0447 3.59551 20.9129 3.36364 20.6811C3.13177 20.4493 3 20.1313 3 19.8V12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        <p>Drag & drop your photo here, or <label for="image-upload" class="upload-link">browse</label></p>
+                        <p>Drag and drop your photograph, or <span class="upload-link">browse files</span></p>
                     </div>
-                     <input type="file" id="image-upload" accept="image/*" hidden>
+                    <input type="file" id="image-upload" accept="image/*" hidden>
                 </div>
                 <div id="image-preview-container" class="hidden">
-                    <img id="image-preview" src="#" alt="Your uploaded photo" />
+                    <img id="image-preview" src="" alt="Your uploaded photo" />
                 </div>
             </div>
 
             <div id="controls-section">
-                <h2>Fine-Tune Your Future</h2>
+                <h2>Adjust Lifestyle Factors</h2>
                 <div class="slider-group">
                     <label for="smoking-slider">Smoking
                         <span class="tooltip-icon">?
@@ -51,37 +50,41 @@
                     <input type="range" id="smoking-slider" min="0" max="10" value="0">
                 </div>
                 <div class="slider-group">
-                    <label for="sun-slider">Sun Exposure
+                    <label for="sunExposure-slider">Sun Exposure
                         <span class="tooltip-icon">?
-                             <span class="tooltip-text">Models the impact of cumulative sun exposure, from minimal to heavy.</span>
+                            <span class="tooltip-text">Models the impact of cumulative sun exposure, from minimal to heavy.</span>
                         </span>
                     </label>
-                    <input type="range" id="sun-slider" min="0" max="10" value="2">
+                    <input type="range" id="sunExposure-slider" min="0" max="10" value="2">
                 </div>
                 <div class="slider-group">
                     <label for="stress-slider">Stress
-                         <span class="tooltip-icon">?
+                        <span class="tooltip-icon">?
                             <span class="tooltip-text">Reflects how high or low stress levels can influence signs of aging.</span>
                         </span>
                     </label>
                     <input type="range" id="stress-slider" min="0" max="10" value="3">
                 </div>
-                 <button id="generate-button" class="action-button">Generate Future Images</button>
+                <button id="generate-button" class="action-button">Envision My Future</button>
             </div>
 
             <div id="results-section">
-                <h2>Imagining the wonderful journey of you through the decades to come!</h2>
+                <h2>Your Journey Through Time Awaits</h2>
                 <div id="loading-spinner" class="hidden">
-                    <div class="spinner"></div>
-                    <p id="loading-text">Imagining your future self... This may take a moment.</p>
+                     <div class="clock-loader">
+                        <div class="clock-hand clock-hour-hand"></div>
+                        <div class="clock-hand clock-minute-hand"></div>
+                    </div>
+                    <p id="loading-text"></p>
                 </div>
                 <div id="timeline-container"></div>
             </div>
-             <div id="error-message" class="hidden"></div>
+
+            <div id="error-message"></div>
         </main>
 
         <footer>
-            <p><strong>Privacy Note:</strong> Your images are not stored. All processing happens in memory to generate your results.</p>
+            <p><strong>Privacy Commitment:</strong> Your images are processed in memory and are never stored on our servers.</p>
         </footer>
     </div>
     <script type="module" src="index.tsx"></script>
